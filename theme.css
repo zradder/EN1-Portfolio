@@ -22,7 +22,8 @@
     /* Backgrounds */
     --color-bg-page: #f4f4f4;       /* page background on activity/project pages */
     --color-bg-card: #ffffff;       /* white card/container background */
-    --color-bg-overlay: rgba(74, 122, 110, 0.5); /* translucent header/hero overlay */
+    --color-bg-overlay: rgba(30, 52, 44, 0.7); /* matches the top bar and hero text blocks */
+    --color-text-box: rgba(30, 52, 44, 0.7); /* dark overlay behind hero text blocks */
 
     /* Typography */
     --font-body: Arial, Helvetica, sans-serif;

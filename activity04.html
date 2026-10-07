@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Activity 4</title>
+    <title>Activity 4: Inputs and Outputs</title>
     <link rel="stylesheet" href="./project.css">
 </head>
 <body>
@@ -19,13 +19,116 @@
         <h1 class='proj-header'>Project Portfolio</h1>
 
         <div class="proj-img-container">
-            <img src="images/activity03.png" alt="Activity 4 preview image">
+            <img src="images/input activity.jpeg" alt="Activity 4 preview image">
         </div>
 
-        <h2 class='proj-header'>Activity 4</h2>
+        <h2 class='proj-header'>Activity 4: Inputs and Outputs</h2>
 
         <div class="proj-desc">
-            <p>This page is ready for the Activity 4 write-up, materials, and reflection. Add the final description, images, and notes when the work is complete.</p>
+            <p>Used the hub's left and right buttons as inputs to control a motor connected to port A. The hub display shows whole radians of net rotation, and reaching 25 radians triggers a five-second dance animation.</p>
+        </div>
+
+        <div class="proj-code">
+            <h3>Code:</h3>
+            <pre><code># Assumption: the motor is connected to port A.
+# The hub's left and right buttons control its direction.
+from hub import port, button, light_matrix
+import runloop
+import motor
+
+MOTOR_SPEED = 300
+PIXEL_COUNT = 25
+RADIANS_TO_TRIGGER_DANCE = 25
+LOOP_DELAY_MS = 10
+DANCE_DURATION_TICKS = 500  # 500 loops × 10 ms = about 5 seconds
+FRAME_DURATION_TICKS = 25   # Change dance pose about every 0.25 seconds
+
+async def main():
+    # Begin measuring the motor's net rotation from zero.
+    motor.reset_relative_position(port.A, 0)
+
+    # Track whether the dance is playing and how much time remains.
+    dance_ticks_remaining = 0
+    dance_was_triggered = False
+
+    # Check the buttons and update the display repeatedly.
+    while True:
+        # Run the motor while a single direction button is held.
+        if button.pressed(button.LEFT) and not button.pressed(button.RIGHT):
+            motor.run(port.A, -MOTOR_SPEED)
+        elif button.pressed(button.RIGHT) and not button.pressed(button.LEFT):
+            motor.run(port.A, MOTOR_SPEED)
+        else:
+            # Stop if neither button, or both buttons, are pressed.
+            motor.stop(port.A)
+
+        # Convert the motor's net rotation from degrees to radians.
+        degrees_turned = motor.relative_position(port.A)
+        radians_turned = degrees_turned * 3.14159 / 180
+
+        # Start the dance when the net rotation reaches 25 radians.
+        if abs(radians_turned) >= RADIANS_TO_TRIGGER_DANCE:
+            if not dance_was_triggered:
+                dance_ticks_remaining = DANCE_DURATION_TICKS
+                dance_was_triggered = True
+        else:
+            # Allow another dance if the motor goes back below 25 radians.
+            dance_was_triggered = False
+
+        if dance_ticks_remaining > 0:
+            # Alternate between two small pixel-art dance poses.
+            if (dance_ticks_remaining // FRAME_DURATION_TICKS) % 2 == 0:
+                # First pose: a figure with arms raised.
+                light_matrix.show([
+                    0, 0, 100, 0, 0,
+                    0, 100, 100, 100, 0,
+                    0, 0, 100, 0, 0,
+                    0, 100, 0, 100, 0,
+                    100, 0, 0, 0, 100
+                ])
+            else:
+                # Second pose: a figure with arms stretched out.
+                light_matrix.show([
+                    0, 0, 100, 0, 0,
+                    100, 100, 100, 100, 100,
+                    0, 0, 100, 0, 0,
+                    0, 100, 0, 100, 0,
+                    0, 100, 0, 100, 0
+                ])
+
+            # Count down the dance time.
+            dance_ticks_remaining = dance_ticks_remaining - 1
+        else:
+            # Convert rotation to a count of whole radians for the pixel display.
+            whole_radians = int(abs(radians_turned))
+            if whole_radians > PIXEL_COUNT:
+                whole_radians = PIXEL_COUNT
+
+            # Start with all display pixels off.
+            pixels = [
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0
+            ]
+
+            # Light one pixel for each whole radian of net rotation.
+            # Positive and negative rotation fill from opposite ends.
+            for pixel_number in range(whole_radians):
+                if radians_turned >= 0:
+                    pixels[pixel_number] = 100
+                else:
+                    pixels[PIXEL_COUNT - 1 - pixel_number] = 100
+
+            # Show the motor's rotation on the hub lights.
+            light_matrix.show(pixels)
+
+        # Pause briefly so the buttons and display update smoothly.
+        await runloop.sleep_ms(LOOP_DELAY_MS)
+
+# Start the program.
+runloop.run(main())</code></pre>
         </div>
 
     </div>
